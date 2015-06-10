@@ -149,7 +149,7 @@ func processReplotBody(r *http.Request) (rd *models.ReplotData, err error) {
 func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	pd, err := processPostPlotBody(r)
 	if err != nil {
-		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+		http.Error(w, ApiErrorJSON(err.Error(), ""), http.StatusBadRequest)
 		return nil
 	}
 
@@ -189,7 +189,7 @@ func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 func runHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	pd, err := processPostPlotBody(r)
 	if err != nil {
-		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+		http.Error(w, ApiErrorJSON(err.Error(), ""), http.StatusBadRequest)
 		return nil
 	}
 
@@ -271,7 +271,7 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	rd, err := processReplotBody(r)
 	if err != nil {
-		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+		http.Error(w, ApiErrorJSON(err.Error(), ""), http.StatusBadRequest)
 		return nil
 	}
 
