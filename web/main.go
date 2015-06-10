@@ -26,16 +26,21 @@ import (
 var db *sqlx.DB
 var dbHostPort string
 var tmpDirBase string
-var assetsDir string
+var viewsDir string
+var staticDir string
 
 func init() {
 	flag.StringVar(&dbHostPort, "db", "127.0.0.1:3306", "MySQL host and port")
 	flag.StringVar(&tmpDirBase, "tmpdir", "/tmp", "tmp directory. when using boot2docker, directories outside of /Users are not mountable, so use ~/tmp for instance.")
-	flag.StringVar(&assetsDir, "assets", "", "web assets directory")
+	flag.StringVar(&viewsDir, "views", "", "web views directory")
+	flag.StringVar(&staticDir, "static", "", "static file directory")
 	flag.Parse()
 
-	if !util.IsDirectory(assetsDir) {
-		panic("You must pass an existing directory to the `assets` option")
+	if !util.IsDirectory(viewsDir) {
+		panic("You must pass an existing directory to the `views` option")
+	}
+	if !util.IsDirectory(staticDir) {
+		panic("You must pass an existing directory to the `static` option")
 	}
 }
 
@@ -47,7 +52,10 @@ func main() {
 	goji.Post("/replot", runHandler)
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), getPlotHandler)
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), getPlotImageHandler)
-	goji.Get("/*", http.FileServer(http.Dir(assetsDir)))
+	goji.Get("/edit/[0-9a-zA-Z]+", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
+	goji.Get("/edit", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
+	goji.Get("/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/index.html") })
+	goji.Get("/static/*", http.StripPrefix("/static", http.FileServer(http.Dir(staticDir))))
 	goji.Serve()
 }
 
