@@ -26,11 +26,17 @@ import (
 var db *sqlx.DB
 var dbHostPort string
 var tmpDirBase string
+var assetsDir string
 
 func init() {
 	flag.StringVar(&dbHostPort, "db", "127.0.0.1:3306", "MySQL host and port")
 	flag.StringVar(&tmpDirBase, "tmpdir", "/tmp", "tmp directory. when using boot2docker, directories outside of /Users are not mountable, so use ~/tmp for instance.")
+	flag.StringVar(&assetsDir, "assets", "", "web assets directory")
 	flag.Parse()
+
+	if !util.IsDirectory(assetsDir) {
+		panic("You must pass an existing directory to the `assets` option")
+	}
 }
 
 func main() {
@@ -41,6 +47,7 @@ func main() {
 	goji.Post("/replot", runHandler)
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), getPlotHandler)
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), getPlotImageHandler)
+	goji.Get("/*", http.FileServer(http.Dir(assetsDir)))
 	goji.Serve()
 }
 
