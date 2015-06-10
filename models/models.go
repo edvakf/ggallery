@@ -7,6 +7,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
+	"github.com/edvakf/ggallery/ggplot2"
 	"github.com/edvakf/ggallery/util"
 )
 
@@ -97,5 +98,25 @@ func SelectPlotAndFiles(id string) (pd *PlotData, err error) {
 	for _, file := range files {
 		pd.Files[file.Name] = file.Content
 	}
+	return
+}
+
+func ExecPlot(dir string, pd *PlotData) (out string, imgFile string, err error) {
+	gg := ggplot2.Gg{Dir: dir, Type: "svg"}
+
+	for name, content := range pd.Files {
+		err = gg.AddFile(name, content)
+		if err != nil {
+			return
+		}
+	}
+
+	gg.AddCode(pd.Code)
+
+	out, err = gg.Run()
+	if err != nil {
+		return
+	}
+	imgFile = dir + "/" + gg.ImgName()
 	return
 }

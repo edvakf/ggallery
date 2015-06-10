@@ -15,7 +15,6 @@ import (
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 
-	"github.com/edvakf/ggallery/ggplot2"
 	"github.com/edvakf/ggallery/models"
 	"github.com/edvakf/ggallery/util"
 )
@@ -147,27 +146,6 @@ func processReplotBody(r *http.Request) (rd *models.ReplotData, err error) {
 	return rd, nil
 }
 
-func plot(dir string, pd *models.PlotData) (out string, imgFile string, err error) {
-	// plot
-	gg := ggplot2.Gg{Dir: dir, Type: "svg"}
-
-	for name, content := range pd.Files {
-		err = gg.AddFile(name, content)
-		if err != nil {
-			return
-		}
-	}
-
-	gg.AddCode(pd.Code)
-
-	out, err = gg.Run()
-	if err != nil {
-		return
-	}
-	imgFile = dir + "/" + gg.ImgName()
-	return
-}
-
 func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	pd, err := processPostPlotBody(r)
 	if err != nil {
@@ -182,7 +160,7 @@ func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := plot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
@@ -222,7 +200,7 @@ func runHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := plot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
@@ -279,7 +257,7 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 	}
 	defer os.RemoveAll(tmpDir)
 
-	_, imgFile, err := plot(tmpDir, pd)
+	_, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
 		// unlike POST /plot API, code excecution failure causes 500 error here instead of 422
 		// because the fact that the code is stored already means it was once able to be run
@@ -313,7 +291,7 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := plot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
