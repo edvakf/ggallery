@@ -43,11 +43,11 @@ func init() {
 }
 
 func main() {
-	goji.Post("/plot", postPlotHandler)
-	goji.Post("/run", runHandler)
-	goji.Post("/replot", runHandler)
-	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), getPlotHandler)
-	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), getPlotImageHandler)
+	goji.Post("/plot", APIHandler(postPlotHandler))
+	goji.Post("/run", APIHandler(runHandler))
+	goji.Post("/replot", APIHandler(runHandler))
+	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), APIHandler(getPlotHandler))
+	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), APIHandler(getPlotImageHandler))
 	goji.Get("/edit/[0-9a-zA-Z]+", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
 	goji.Get("/edit", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
 	goji.Get("/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/index.html") })
@@ -86,6 +86,24 @@ func ApiErrorJSON(msg string, out string) string {
 		return ""
 	}
 	return string(j)
+}
+
+type ErrHandlerFunc func(c web.C, w http.ResponseWriter, r *http.Request) error
+
+// goji accepts handler of type `goji.HandlerFunc` which is actually
+// `func(c web.C, w http.ResponseWriter, r *http.Request)`
+// APIHandler excecutes my own handler `ErrHandlerFunc` and converts that to `goji.HandlerFunc`
+// if the ErrHandlerFunc returns an error, it logs and output an InternalServerError
+// anything other than InternalServerError must be responded by ErrHandlerFunc
+func APIHandler(handler ErrHandlerFunc) func(c web.C, w http.ResponseWriter, r *http.Request) {
+	return func(c web.C, w http.ResponseWriter, r *http.Request) {
+		err := handler(c, w, r)
+
+		if err != nil {
+			log.Println(err.Error())
+			http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
+		}
+	}
 }
 
 func processPostPlotBody(r *http.Request) (*models.PlotData, error) {
@@ -150,217 +168,173 @@ func plot(dir string, pd *models.PlotData) (out string, imgFile string, err erro
 	return
 }
 
-func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	// only 500 errors are handled outside
-	unhandledErr := func() error {
+func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
+	pd, err := processPostPlotBody(r)
+	if err != nil {
+		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+		return nil
+	}
 
-		pd, err := processPostPlotBody(r)
-		if err != nil {
-			http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+	// make tmpDir
+	tmpDir, err := ioutil.TempDir(tmpDirBase, "")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	out, imgFile, err := plot(tmpDir, pd)
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
 			return nil
 		}
-
-		// make tmpDir
-		tmpDir, err := ioutil.TempDir(tmpDirBase, "")
-		if err != nil {
-			return err
-		}
-		defer os.RemoveAll(tmpDir)
-
-		out, imgFile, err := plot(tmpDir, pd)
-		if err != nil {
-			if _, ok := err.(*exec.ExitError); ok {
-				http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
-				return nil
-			}
-			return err
-		}
-
-		svg, err := ioutil.ReadFile(imgFile)
-		if err != nil {
-			return err
-		}
-
-		id, err := models.InsertPlotAndFiles(pd)
-		if err != nil {
-			return err
-		}
-
-		err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
-		if err != nil {
-			return err
-		}
-		return nil
-	}()
-
-	if unhandledErr != nil {
-		log.Println(unhandledErr.Error())
-		http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
+		return err
 	}
+
+	svg, err := ioutil.ReadFile(imgFile)
+	if err != nil {
+		return err
+	}
+
+	id, err := models.InsertPlotAndFiles(pd)
+	if err != nil {
+		return err
+	}
+
+	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func runHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	// only 500 errors are handled outside
-	unhandledErr := func() error {
+func runHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
+	pd, err := processPostPlotBody(r)
+	if err != nil {
+		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+		return nil
+	}
 
-		pd, err := processPostPlotBody(r)
-		if err != nil {
-			http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
+	// make tmpDir
+	tmpDir, err := ioutil.TempDir(tmpDirBase, "")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	out, imgFile, err := plot(tmpDir, pd)
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
 			return nil
 		}
-
-		// make tmpDir
-		tmpDir, err := ioutil.TempDir(tmpDirBase, "")
-		if err != nil {
-			return err
-		}
-		defer os.RemoveAll(tmpDir)
-
-		out, imgFile, err := plot(tmpDir, pd)
-		if err != nil {
-			if _, ok := err.(*exec.ExitError); ok {
-				http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
-				return nil
-			}
-			return err
-		}
-
-		svg, err := ioutil.ReadFile(imgFile)
-		if err != nil {
-			return err
-		}
-
-		err = json.NewEncoder(w).Encode(RunResponse{Output: out, SVG: string(svg)})
-		if err != nil {
-			return err
-		}
-		return nil
-	}()
-
-	if unhandledErr != nil {
-		log.Println(unhandledErr.Error())
-		http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
+		return err
 	}
+
+	svg, err := ioutil.ReadFile(imgFile)
+	if err != nil {
+		return err
+	}
+
+	err = json.NewEncoder(w).Encode(RunResponse{Output: out, SVG: string(svg)})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func getPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	// only 500 errors are handled outside
-	unhandledErr := func() error {
+func getPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
+	id := c.URLParams["id"]
 
-		id := c.URLParams["id"]
-
-		pd, err := models.SelectPlotAndFiles(id)
-		if err == sql.ErrNoRows {
-			http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		err = json.NewEncoder(w).Encode(pd)
-		if err != nil {
-			return err
-		}
+	pd, err := models.SelectPlotAndFiles(id)
+	if err == sql.ErrNoRows {
+		http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
 		return nil
-	}()
-
-	if unhandledErr != nil {
-		log.Println(unhandledErr.Error())
-		http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
+	} else if err != nil {
+		return err
 	}
+
+	err = json.NewEncoder(w).Encode(pd)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	unhandledErr := func() error {
+func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
+	id := c.URLParams["id"]
 
-		id := c.URLParams["id"]
-
-		pd, err := models.SelectPlotAndFiles(id)
-		if err == sql.ErrNoRows {
-			http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		// make tmpDir
-		tmpDir, err := ioutil.TempDir(tmpDirBase, "")
-		if err != nil {
-			return err
-		}
-		defer os.RemoveAll(tmpDir)
-
-		_, imgFile, err := plot(tmpDir, pd)
-		if err != nil {
-			// unlike POST /plot API, code excecution failure causes 500 error here instead of 422
-			// because the fact that the code is stored already means it was once able to be run
-			return err
-		}
-
-		http.ServeFile(w, r, imgFile)
+	pd, err := models.SelectPlotAndFiles(id)
+	if err == sql.ErrNoRows {
+		http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
 		return nil
-	}()
-
-	if unhandledErr != nil {
-		log.Println(unhandledErr.Error())
-		http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
+	} else if err != nil {
+		return err
 	}
+
+	// make tmpDir
+	tmpDir, err := ioutil.TempDir(tmpDirBase, "")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	_, imgFile, err := plot(tmpDir, pd)
+	if err != nil {
+		// unlike POST /plot API, code excecution failure causes 500 error here instead of 422
+		// because the fact that the code is stored already means it was once able to be run
+		return err
+	}
+
+	http.ServeFile(w, r, imgFile)
+	return nil
 }
 
-func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) {
-	// only 500 errors are handled outside
-	unhandledErr := func() error {
-
-		rd, err := processReplotBody(r)
-		if err != nil {
-			http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
-			return nil
-		}
-
-		p, err := models.SelectPlot(rd.ID)
-		if err == sql.ErrNoRows {
-			http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
-			return nil
-		} else if err != nil {
-			return err
-		}
-
-		pd := &models.PlotData{Code: p.Code, Files: rd.Files}
-
-		tmpDir, err := ioutil.TempDir(tmpDirBase, "")
-		if err != nil {
-			return err
-		}
-		defer os.RemoveAll(tmpDir)
-
-		out, imgFile, err := plot(tmpDir, pd)
-		if err != nil {
-			if _, ok := err.(*exec.ExitError); ok {
-				http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
-				return nil
-			}
-			return err
-		}
-
-		svg, err := ioutil.ReadFile(imgFile)
-		if err != nil {
-			return err
-		}
-
-		id, err := models.InsertPlotAndFiles(pd)
-		if err != nil {
-			return err
-		}
-
-		err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
-		if err != nil {
-			return err
-		}
+func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
+	rd, err := processReplotBody(r)
+	if err != nil {
+		http.Error(w, ApiErrorJSON("Invalid request format", ""), http.StatusBadRequest)
 		return nil
-	}()
-
-	if unhandledErr != nil {
-		log.Println(unhandledErr.Error())
-		http.Error(w, ApiErrorJSON("Internal Server Error", ""), http.StatusInternalServerError)
 	}
+
+	p, err := models.SelectPlot(rd.ID)
+	if err == sql.ErrNoRows {
+		http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	pd := &models.PlotData{Code: p.Code, Files: rd.Files}
+
+	tmpDir, err := ioutil.TempDir(tmpDirBase, "")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+
+	out, imgFile, err := plot(tmpDir, pd)
+	if err != nil {
+		if _, ok := err.(*exec.ExitError); ok {
+			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
+			return nil
+		}
+		return err
+	}
+
+	svg, err := ioutil.ReadFile(imgFile)
+	if err != nil {
+		return err
+	}
+
+	id, err := models.InsertPlotAndFiles(pd)
+	if err != nil {
+		return err
+	}
+
+	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
+	if err != nil {
+		return err
+	}
+	return nil
 }
