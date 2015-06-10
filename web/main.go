@@ -116,19 +116,17 @@ func processPostPlotBody(r *http.Request) (*models.PlotData, error) {
 		return nil, errors.New("Content-Type other than application/json not supported yet")
 	}
 
-	// check file names
-	re := regexp.MustCompile("[^0-9a-zA-Z_]")
-	for name, _ := range pd.Files {
-		if re.Match([]byte(name)) {
-			return nil, errors.New("File name must not contain letters other than [0-9a-zA-Z_]")
-		}
+	err := models.ValidateFileNames(pd.Files)
+	if err != nil {
+		return nil, err
 	}
 	return &pd, nil
 }
 
-func processReplotBody(r *http.Request) (rd *models.ReplotData, err error) {
+func processReplotBody(r *http.Request) (*models.ReplotData, error) {
+	var rd models.ReplotData
 	if r.Header.Get("Content-Type") == "application/json" {
-		err = json.NewDecoder(r.Body).Decode(rd)
+		err := json.NewDecoder(r.Body).Decode(&rd)
 		if err != nil {
 			return nil, errors.New("Request JSON invalid")
 		}
@@ -136,14 +134,11 @@ func processReplotBody(r *http.Request) (rd *models.ReplotData, err error) {
 		return nil, errors.New("Content-Type other than application/json not supported yet")
 	}
 
-	// check file names
-	re := regexp.MustCompile("[^0-9a-zA-Z_]")
-	for name, _ := range rd.Files {
-		if re.Match([]byte(name)) {
-			return nil, errors.New("File name must not contain letters other than [0-9a-zA-Z_]")
-		}
+	err := models.ValidateFileNames(rd.Files)
+	if err != nil {
+		return nil, err
 	}
-	return rd, nil
+	return &rd, nil
 }
 
 func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {

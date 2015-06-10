@@ -1,6 +1,8 @@
 package models
 
 import (
+	"errors"
+	"regexp"
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
@@ -119,4 +121,15 @@ func ExecPlot(dir string, pd *PlotData) (out string, imgFile string, err error) 
 	}
 	imgFile = dir + "/" + gg.ImgName()
 	return
+}
+
+var re = regexp.MustCompile("^[0-9a-zA-Z_]+$")
+
+func ValidateFileNames(files map[string]string) error {
+	for name, _ := range files {
+		if re.MatchString(name) {
+			return errors.New("File name can contain only characters in [0-9a-zA-Z_]")
+		}
+	}
+	return nil
 }
