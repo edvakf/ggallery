@@ -270,7 +270,7 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	p, err := models.SelectPlot(rd.ID)
+	pd, err := models.SelectPlotAndFiles(rd.ID)
 	if err == sql.ErrNoRows {
 		http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
 		return nil
@@ -278,7 +278,14 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	pd := &models.PlotData{Code: p.Code, Files: rd.Files}
+	for name, content := range rd.Files {
+		if _, ok := pd.Files[name]; !ok {
+			http.Error(w, ApiErrorJSON("File name must match that of the original plot", ""), http.StatusBadRequest)
+			return nil
+		}
+		// override the file content
+		pd.Files[name] = content
+	}
 
 	tmpDir, err := ioutil.TempDir(tmpDirBase, "")
 	if err != nil {
