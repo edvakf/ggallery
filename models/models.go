@@ -31,14 +31,14 @@ type ReplotData struct {
 }
 
 // plot table
-type Plot struct {
+type plot struct {
 	ID        string    `db:"id"`
 	CreatedAt time.Time `db:"created_at"`
 	Code      string    `db:"code"`
 }
 
 // file table
-type File struct {
+type file struct {
 	PlotId  string `db:"plot_id"`
 	Name    string `db:"name"`
 	Content string `db:"content"`
@@ -77,22 +77,22 @@ func InsertPlotAndFiles(pd *PlotData) (id string, err error) {
 	return
 }
 
-func SelectPlot(id string) (p Plot, err error) {
+func selectPlot(id string) (p plot, err error) {
 	err = db.Get(&p, `SELECT * FROM plot WHERE id = ?`, id)
 	return
 }
 
-func SelectFiles(plotID string) (files []File, err error) {
+func selectFiles(plotID string) (files []file, err error) {
 	err = db.Select(&files, `SELECT * FROM file WHERE plot_id = ?`, plotID)
 	return
 }
 
 func SelectPlotAndFiles(id string) (pd *PlotData, err error) {
-	p, err := SelectPlot(id)
+	p, err := selectPlot(id)
 	if err != nil {
 		return
 	}
-	files, err := SelectFiles(id)
+	files, err := selectFiles(id)
 	if err != nil {
 		return
 	}
