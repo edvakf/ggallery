@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
@@ -116,6 +117,9 @@ func processPostPlotBody(r *http.Request) (*models.PlotData, error) {
 		return nil, errors.New("Content-Type other than application/json not supported yet")
 	}
 
+	if strings.Trim(pd.Code, " ") == "" {
+		return nil, errors.New("Cannot execute empty code")
+	}
 	err := models.ValidateFileNames(pd.Files)
 	if err != nil {
 		return nil, err
