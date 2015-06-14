@@ -96,7 +96,7 @@ func SelectPlotAndFiles(id string) (pd *PlotData, err error) {
 	if err != nil {
 		return
 	}
-	pd = &PlotData{Code: p.Code}
+	pd = &PlotData{Code: p.Code, Files: map[string]string{}}
 	for _, file := range files {
 		pd.Files[file.Name] = file.Content
 	}
