@@ -23,6 +23,7 @@ var app = new Vue({
     output: "",
     error: "",
     id: "",
+    is_loading: false,
   },
   ready: function() {
     if (/\/edit\/(\w+)/.test(location.pathname)) {
@@ -70,7 +71,9 @@ var app = new Vue({
   },
   methods: {
     run: function() {
+      this.is_loading = true;
       run(this.code, this.files, function(response) {
+        this.is_loading = false;
         this.output = response.output || "";
         this.svg = response.svg || "";
         this.error = response.error || "";
@@ -80,7 +83,9 @@ var app = new Vue({
       }.bind(this));
     },
     save: function() {
+      this.is_loading = true;
       plot(this.code, this.files, function(response) {
+        this.is_loading = false;
         this.output = response.output || "";
         this.svg = response.svg || "";
         this.error = response.error || "";

@@ -69,6 +69,7 @@
             <div class="panel-body">
 
               <div class="thumbnail result-image">
+                <img id="image" src="/static/loading.gif" v-if="is_loading">
                 <img id="image" v-attr="src: svg | svg2url">
 
                 <div class="caption" v-if="id">
