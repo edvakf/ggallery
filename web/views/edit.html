@@ -2,8 +2,128 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>ggallery - ggplot2 gallery</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
   <link rel="stylesheet" href="/static/edit.css">
-  <script src="/static/edit.js"></script>
 </head>
 
-edit.html
+<nav class="navbar navbar-inverse navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/">ggallery</a>
+    </div>
+  </div>
+</nav>
+
+<div id="app" class="container-fluid">
+  <div role="tabpanel" class="col-md-6 column">
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation" class="active"><a href="#code-panel" id="code-tab" aria-controls="code-tab" role="tab" data-toggle="tab">Code</a></li>
+      <li role="presentation" v-repeat="files"><a href="#{{id}}-panel" id="{{id}}-tab" v-text="name" aria-controls="file-tab" role="tab" data-toggle="tab"></a></li>
+      <li role="presentation"><a class="glyphicon glyphicon-plus-sign" v-on="click: addFile" title="Attach file"></a></li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div role="tabpanel" class="tab-pane active fade in" id="code-panel">
+
+        <textarea class="form-control editor" id="code" v-model="code"></textarea>
+
+        <button class="btn btn-primary" id="button" v-on="click: run">run</button>
+
+        <button class="btn btn-success" id="button" v-on="click: save">save</button>
+
+      </div>
+      <div role="tabpanel" class="tab-pane fade" id="{{id}}-panel" v-repeat="files">
+
+        <div class="form-inline">
+          <label>File name:
+            <input type="text" class="form-control" id="name" name="name" v-model="name">
+          </label>
+
+          <button class="btn btn-danger pull-right" id="{{id}}" v-on="click: removeFile">Remove this file</button>
+        </div>
+
+        <textarea id="content" class="form-control editor" v-model="content"></textarea>
+
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6 column">
+
+    <!-- Tab panes -->
+    <div class="tab-content">
+      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab" id="plotHeading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordion" href="#plotPanel" aria-expanded="true" aria-controls="plotPanel">
+                Plot
+              </a>
+            </h4>
+          </div>
+          <div id="plotPanel" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="plotHeading">
+            <div class="panel-body">
+
+              <div class="thumbnail result-image">
+                <img id="image" v-attr="src: svg | svg2url">
+
+                <div class="caption" v-if="id">
+                  <ul class="nav nav-pills">
+                    <li role="presentation" class="active"><a data-toggle="pill" href="#image-url-pane">Image URL</a></li>
+                    <li role="presentation"><a data-toggle="pill" href="#edit-url-pane">Edit URL</a></li>
+                    <li role="presentation"><a data-toggle="pill" href="#html-image-pane">HTML Image</a></li>
+                    <li role="presentation"><a data-toggle="pill" href="#replot-api-pane" v-if="replotApi">Replot API</a></li>
+                  </ul>
+
+                  <div class="tab-content">
+                    <div id="image-url-pane" class="tab-pane active">
+                      <input type="text" class="form-control" v-attr="value: imageUrl">
+                    </div>
+                    <div id="edit-url-pane" class="tab-pane">
+                      <input type="text" class="form-control" v-attr="value: editUrl">
+                    </div>
+                    <div id="html-image-pane" class="tab-pane">
+                      <input type="text" class="form-control" v-attr="value: htmlImage">
+                    </div>
+                    <div id="replot-api-pane" class="tab-pane" v-if="replotApi">
+                      <input type="text" class="form-control" v-attr="value: replotApi">
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-heading" role="tab" id="outputHeading">
+            <h4 class="panel-title">
+              <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#outputPanel" aria-expanded="false" aria-controls="outputPanel">
+                Output
+              </a>
+            </h4>
+          </div>
+          <div id="outputPanel" class="panel-collapse collapse" role="tabpanel" aria-labelledby="outputHeading">
+            <div class="panel-body">
+
+              <div class="alert alert-danger" role="alert" id="error" v-text="error" v-if="error"></div>
+
+              <pre id="output" v-text="output"></pre>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/0.11.10/vue.js"></script>
+<script src="/static/edit.js"></script>
