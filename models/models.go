@@ -24,12 +24,6 @@ type PlotData struct {
 	Files map[string]string `json:"files"`
 }
 
-// request body JSON used for /replot
-type ReplotData struct {
-	ID    string            `json:"id"`
-	Files map[string]string `json:"files"`
-}
-
 // plot table
 type plot struct {
 	ID        string    `db:"id"`
@@ -127,7 +121,7 @@ var re = regexp.MustCompile("^[0-9a-zA-Z_]+$")
 
 func ValidateFileNames(files map[string]string) error {
 	for name, _ := range files {
-		if re.MatchString(name) {
+		if !re.MatchString(name) {
 			return errors.New("File name can contain only characters in [0-9a-zA-Z_]")
 		}
 	}

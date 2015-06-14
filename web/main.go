@@ -45,7 +45,7 @@ func init() {
 func main() {
 	goji.Post("/plot", APIHandler(postPlotHandler))
 	goji.Post("/run", APIHandler(runHandler))
-	goji.Post("/replot", APIHandler(runHandler))
+	goji.Post(regexp.MustCompile(`^/replot/(?P<id>[0-9a-zA-Z]+)$`), APIHandler(replotHandler))
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), APIHandler(getPlotHandler))
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), APIHandler(getPlotImageHandler))
 	goji.Get(regexp.MustCompile(`^/edit/[0-9a-zA-Z]+$`), func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
@@ -126,22 +126,23 @@ func processPostPlotBody(r *http.Request) (*models.PlotData, error) {
 	return &pd, nil
 }
 
-func processReplotBody(r *http.Request) (*models.ReplotData, error) {
-	var rd models.ReplotData
+func processReplotBody(r *http.Request) (map[string]string, error) {
+	var files map[string]string
 	if r.Header.Get("Content-Type") == "application/json" {
-		err := json.NewDecoder(r.Body).Decode(&rd)
+		err := json.NewDecoder(r.Body).Decode(&files)
 		if err != nil {
 			return nil, errors.New("Request JSON invalid")
 		}
 	} else {
 		return nil, errors.New("Content-Type other than application/json not supported yet")
 	}
+	log.Println(files)
 
-	err := models.ValidateFileNames(rd.Files)
+	err := models.ValidateFileNames(files)
 	if err != nil {
 		return nil, err
 	}
-	return &rd, nil
+	return files, nil
 }
 
 func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
@@ -267,13 +268,15 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 }
 
 func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
-	rd, err := processReplotBody(r)
+	id := c.URLParams["id"]
+
+	files, err := processReplotBody(r)
 	if err != nil {
 		http.Error(w, ApiErrorJSON(err.Error(), ""), http.StatusBadRequest)
 		return nil
 	}
 
-	pd, err := models.SelectPlotAndFiles(rd.ID)
+	pd, err := models.SelectPlotAndFiles(id)
 	if err == sql.ErrNoRows {
 		http.Error(w, ApiErrorJSON("Not found", ""), http.StatusNotFound)
 		return nil
@@ -281,7 +284,7 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	for name, content := range rd.Files {
+	for name, content := range files {
 		if _, ok := pd.Files[name]; !ok {
 			http.Error(w, ApiErrorJSON("File name must match that of the original plot", ""), http.StatusBadRequest)
 			return nil
@@ -310,12 +313,12 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	id, err := models.InsertPlotAndFiles(pd)
+	newID, err := models.InsertPlotAndFiles(pd)
 	if err != nil {
 		return err
 	}
 
-	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id})
+	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: newID})
 	if err != nil {
 		return err
 	}
