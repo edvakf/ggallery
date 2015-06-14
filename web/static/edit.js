@@ -6,6 +6,14 @@ Vue.filter('svg2url', function(svg) {
   }
 });
 
+Vue.filter('filename2context', function(name) {
+  if (/^[a-zA-Z0-9_]+$/.test(name)) {
+    return 'has-success';
+  } else {
+    return 'has-error';
+  }
+});
+
 var app = new Vue({
   el: '#app',
   data: {

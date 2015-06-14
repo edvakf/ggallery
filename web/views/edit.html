@@ -38,9 +38,11 @@
       <div role="tabpanel" class="tab-pane fade" id="{{id}}-panel" v-repeat="files">
 
         <div class="form-inline">
-          <label>File name:
-            <input type="text" class="form-control" id="name" name="name" v-model="name">
-          </label>
+          <div class="form-group {{name | filename2context}}">
+            <label class="control-label">File name ([a-zA-Z0-9_] only):
+              <input type="text" class="form-control" id="name" name="name" v-model="name">
+            </label>
+          </div>
 
           <button class="btn btn-danger pull-right" id="{{id}}" v-on="click: removeFile">Remove this file</button>
         </div>
