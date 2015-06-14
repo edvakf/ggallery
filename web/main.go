@@ -66,7 +66,6 @@ type PlotResponse struct {
 	Output string `json:"output"`
 	SVG    string `json:"svg"`
 	ID     string `json:"id"`
-	SVGURL string `json:"svg_url"`
 }
 
 // API error response
@@ -178,7 +177,7 @@ func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
+	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id})
 	if err != nil {
 		return err
 	}
@@ -316,7 +315,7 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id, SVGURL: "/plot/" + id + ".svg"})
+	err = json.NewEncoder(w).Encode(PlotResponse{Output: out, SVG: string(svg), ID: id})
 	if err != nil {
 		return err
 	}
