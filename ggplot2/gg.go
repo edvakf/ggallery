@@ -30,7 +30,7 @@ func (gg *Gg) AddCode(code string) (err error) {
 		"\n" +
 		code +
 		"\n" +
-		`ggsave(file="` + gg.ImgName() + `", dpi=72, width=10, height=10);`
+		`ggsave(file="` + gg.ImgName() + `", dpi=72, width=8, height=8);`
 
 	return gg.AddFile("program.R", prog)
 }
