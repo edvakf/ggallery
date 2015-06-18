@@ -96,6 +96,7 @@ type ErrHandlerFunc func(c web.C, w http.ResponseWriter, r *http.Request) error
 // anything other than InternalServerError must be responded by ErrHandlerFunc
 func APIHandler(handler ErrHandlerFunc) func(c web.C, w http.ResponseWriter, r *http.Request) {
 	return func(c web.C, w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		err := handler(c, w, r)
 
 		if err != nil {
@@ -263,6 +264,7 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
+	w.Header().Set("Content-Type", "image/svg+xml")
 	http.ServeFile(w, r, imgFile)
 	return nil
 }
