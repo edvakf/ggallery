@@ -76,7 +76,7 @@
                 <img id="image" src="/static/loading.gif" v-if="is_loading">
                 <img id="image" v-attr="src: svg | svg2url">
 
-                <div class="caption" v-if="id">
+                <div class="caption" v-if="show_url">
                   <ul class="nav nav-pills">
                     <li role="presentation" class="active"><a data-toggle="pill" href="#image-url-pane">Image URL</a></li>
                     <li role="presentation"><a data-toggle="pill" href="#edit-url-pane">Edit URL</a></li>

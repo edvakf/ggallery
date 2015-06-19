@@ -24,10 +24,13 @@ var app = new Vue({
     error: "",
     id: "",
     is_loading: false,
+    show_url: false,
   },
   ready: function() {
     if (/\/edit\/(\w+)/.test(location.pathname)) {
       this.id = RegExp.$1;
+      this.is_loading = true;
+
       getJSON('/plot/' + this.id, function(response) {
         if (response.files) {
           var i = 0;
@@ -43,9 +46,25 @@ var app = new Vue({
         $('#plotPanel').collapse(this.error ? 'hide' : 'show');
         $('#outputPanel').collapse(this.error ? 'show' : 'hide');
 
-        if (!this.error) {
-          this.$options.methods.run.call(this);
+        if (this.error) {
+          this.is_loading = false;
+          return
         }
+
+        run(this.code, this.files, function(response) {
+          this.is_loading = false;
+          this.output = response.output || "";
+          this.svg = response.svg || "";
+          this.error = response.error || "";
+
+          $('#plotPanel').collapse(this.error ? 'hide' : 'show');
+          $('#outputPanel').collapse(this.error ? 'show' : 'hide');
+
+          if (!this.error) {
+            this.show_url = true;
+          }
+        }.bind(this));
+
       }.bind(this));
     }
   },
@@ -72,6 +91,7 @@ var app = new Vue({
   methods: {
     run: function() {
       this.is_loading = true;
+      this.show_url = false;
       run(this.code, this.files, function(response) {
         this.is_loading = false;
         this.output = response.output || "";
@@ -94,7 +114,10 @@ var app = new Vue({
         $('#plotPanel').collapse(this.error ? 'hide' : 'show');
         $('#outputPanel').collapse(this.error ? 'show' : 'hide');
 
-        history.pushState(null, "", '/edit/' + this.id);
+        if (!this.error) {
+          history.pushState(null, "", '/edit/' + this.id);
+          this.show_url = true;
+        }
       }.bind(this));
     },
     addFile: function() {
