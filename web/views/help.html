@@ -1,0 +1,73 @@
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>ggplot gallery</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+</head>
+
+<nav class="navbar navbar-inverse">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/">ggplot gallery</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li><a href="/edit">Edit and Run</a></li>
+      <li><a href="/help">Help</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="container">
+  <h2>ggplot gallery</h2>
+
+  <h3>What is this web site?</h3>
+  <p>This is an online <a href="http://www.r-project.org/" target="_blank">R</a> runner.</p>
+  <p>The output you get is in the form of a <a href="http://docs.ggplot2.org/current/" target="_blank">ggplot2</a> plot.</p>
+
+  <h3>The Editor</h3>
+  <p>Write the code and click the "run" button to show a plot. If you want it to have a fixed URL to replot later, then press the "save" button.</p>
+  <p>You can attach a file accompanied with your code by pressing the <span class="glyphicon glyphicon-plus-sign"></span> sign at the tab bar. The file attached can be used from the code as, for example:</p>
+  <pre>df &lt;- read.table("file1");</pre>
+  <p>There is no need to write <code>library(ggplot2)</code> and <code>ggsave</code> explicitly, as they are addted automatically at execution.</p>
+
+  <h3>Replot</h3>
+  <p>Once you have a working code, it can be used as a template for generating another plot by attaching different set of files. The major purpose of it is to produce daily KPI plots etc. and paste them onto bussiness chats.</p>
+
+  <h3>The API</h3>
+  <p>All POST APIs that accept JSON must be posted with <code>Content-Type: application/json</code> header line. For example:</p>
+  <pre>curl -XPOST -H 'Content-Type: application/json' --data-binary '{"code":"df &lt;- data.frame(x=runif(100), y=runif(100)); ggplot(df, aes(x,y)) + geom_point(alpha = 0.5, size = 10);", "files":{"a": "xyz"}}' http://ggplot.gallery/plot</pre>
+  <p>Other POST content types are not supported at the momemnt.</p>
+
+  <h4><code>POST /run</code></h4>
+  Run an R code then returns the output (both stdout and stderr) and the svg image.
+
+  <pre>post body: {code:string, files:{name1:content1, name2:content2}}
+ok response: {output:string, svg:string}
+error response: {output:string, message:string}</pre>
+
+  <h4><code>POST /plot</code></h4>
+  Run an R code and save the result for later reference (ie. give an id).
+
+  <pre>post body: {code:string, files:{name1:content1, name2:content2}}
+ok response: {output:string, svg:string, id:string, svg_url:string}
+error response: {error:string, output:string}</pre>
+
+  The ID returned here can be used to get an image URL.
+
+  <h4><code>GET /plot/:id.svg</code></h4>
+  Execute the saved code and show svg image.
+
+  <h4><code>GET /plot/:id</code></h4>
+  Return the saved code and files. This does not execute the code.
+
+  <pre>response: {code:string, files:{name1:content1, name2:content2}}
+error response: {error:string, output:string}</pre>
+
+  <h4><code>POST /replot/:id</code></h4>
+  Make a plot again with different set of files. You must specify the names that the original plot have.
+
+  <pre>post body: {name1:content1, name2:content2}
+ok response: {output:string, svg:string, id:string, svg_url:string}
+error response: {error:string, output:string}</pre>
+
+</div>

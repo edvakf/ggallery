@@ -50,6 +50,7 @@ func main() {
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), APIHandler(getPlotImageHandler))
 	goji.Get(regexp.MustCompile(`^/edit/[0-9a-zA-Z]+$`), func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
 	goji.Get("/edit", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
+	goji.Get("/help", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/help.html") })
 	goji.Get("/", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/index.html") })
 	goji.Get("/static/*", http.StripPrefix("/static", http.FileServer(http.Dir(staticDir))))
 	goji.Serve()
