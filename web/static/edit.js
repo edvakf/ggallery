@@ -66,7 +66,7 @@ var app = new Vue({
       var filemap = {};
       this.files.forEach(function(file) { filemap[file.name] = 'content of ' + file.name + '' });
       return 'curl -H \'Content-Type: application/json\' --data-binary \'' + JSON.stringify(filemap) + '\' '
-        + urlBase() + '/replot/' + this.id + '">';
+        + urlBase() + '/replot/' + this.id;
     },
   },
   methods: {
