@@ -40,7 +40,7 @@ func (gg *Gg) AddCode(code string) (err error) {
 
 func (gg *Gg) Run() (string, error) {
 	cmd := exec.Command(
-		"docker", "run", "-v", gg.Dir+":/tmp", "--workdir", "/tmp",
+		"docker", "run", "-v", gg.Dir+":/tmp", "--workdir", "/tmp", "--rm",
 		"quay.io/edvakf/r-ggplot2",
 		"timeout", strconv.Itoa(gg.Timeout),
 		"R", "--vanilla", "--quiet", "-f", "program.R",
