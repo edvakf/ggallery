@@ -107,7 +107,10 @@ func ExecPlot(dir string, pd *PlotData) (out string, imgFile string, err error) 
 		}
 	}
 
-	gg.AddCode(pd.Code)
+	err = gg.AddCode(pd.Code)
+	if err != nil {
+		return
+	}
 
 	out, err = gg.Run()
 	if err != nil {
