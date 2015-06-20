@@ -3,12 +3,15 @@ package ggplot2
 import (
 	"os"
 	"os/exec"
+	"strconv"
+	"syscall"
 )
 
 // Responsible for running R and get output as ggplot2 plot
 type Gg struct {
-	Dir  string
-	Type string
+	Dir     string
+	Type    string
+	Timeout int
 }
 
 func (gg *Gg) ImgName() string {
@@ -36,8 +39,20 @@ func (gg *Gg) AddCode(code string) (err error) {
 }
 
 func (gg *Gg) Run() (string, error) {
-	cmd := exec.Command("docker", "run", "-v", gg.Dir+":/tmp", "--workdir", "/tmp", "quay.io/edvakf/r-ggplot2", "R", "--vanilla", "--quiet", "-f", "program.R")
+	cmd := exec.Command(
+		"docker", "run", "-v", gg.Dir+":/tmp", "--workdir", "/tmp",
+		"quay.io/edvakf/r-ggplot2",
+		"timeout", strconv.Itoa(gg.Timeout),
+		"R", "--vanilla", "--quiet", "-f", "program.R",
+	)
 
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+func IsTimeout(err *exec.ExitError) bool {
+	if status, ok := err.Sys().(syscall.WaitStatus); ok {
+		return status.ExitStatus() == 124 // timeout exit status of `timeout` command
+	}
+	return false
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 
+	"github.com/edvakf/ggallery/ggplot2"
 	"github.com/edvakf/ggallery/models"
 	"github.com/edvakf/ggallery/util"
 )
@@ -147,6 +148,18 @@ func processReplotBody(r *http.Request) (map[string]string, error) {
 	return files, nil
 }
 
+func handlePlotError(w http.ResponseWriter, out string, err error) error {
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		if ggplot2.IsTimeout(exitErr) {
+			http.Error(w, ApiErrorJSON("Maximum execution time exceeded", out), http.StatusRequestTimeout)
+		} else {
+			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
+		}
+		return nil
+	}
+	return err
+}
+
 func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	pd, err := processPostPlotBody(r)
 	if err != nil {
@@ -163,11 +176,7 @@ func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 
 	out, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
-			return nil
-		}
-		return err
+		return handlePlotError(w, out, err)
 	}
 
 	svg, err := ioutil.ReadFile(imgFile)
@@ -203,11 +212,7 @@ func runHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 
 	out, imgFile, err := models.ExecPlot(tmpDir, pd)
 	if err != nil {
-		if _, ok := err.(*exec.ExitError); ok {
-			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity
-			return nil
-		}
-		return err
+		return handlePlotError(w, out, err)
 	}
 
 	svg, err := ioutil.ReadFile(imgFile)

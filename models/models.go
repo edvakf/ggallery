@@ -98,7 +98,7 @@ func SelectPlotAndFiles(id string) (pd *PlotData, err error) {
 }
 
 func ExecPlot(dir string, pd *PlotData) (out string, imgFile string, err error) {
-	gg := ggplot2.Gg{Dir: dir, Type: "svg"}
+	gg := ggplot2.Gg{Dir: dir, Type: "svg", Timeout: 10}
 
 	for name, content := range pd.Files {
 		err = gg.AddFile(name, content)
