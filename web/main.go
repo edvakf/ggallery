@@ -140,7 +140,6 @@ func processReplotBody(r *http.Request) (map[string]string, error) {
 	} else {
 		return nil, errors.New("Content-Type other than application/json not supported yet")
 	}
-	log.Println(files)
 
 	err := models.ValidateFileNames(files)
 	if err != nil {
