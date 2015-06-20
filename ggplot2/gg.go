@@ -29,11 +29,11 @@ func (gg *Gg) AddFile(name string, content string) (err error) {
 }
 
 func (gg *Gg) AddCode(code string) (err error) {
-	prog := "library(ggplot2);" +
+	prog := "library(ggplot2)" +
 		"\n" +
 		code +
 		"\n" +
-		`ggsave(file="` + gg.ImgName() + `", dpi=72, width=8, height=8);`
+		`ggsave(file="` + gg.ImgName() + `", dpi=72, width=8, height=8)`
 
 	return gg.AddFile("program.R", prog)
 }
