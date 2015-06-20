@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/zenazn/goji"
@@ -174,7 +175,7 @@ func postPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := models.ExecPlot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd, nil)
 	if err != nil {
 		return handlePlotError(w, out, err)
 	}
@@ -210,7 +211,7 @@ func runHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := models.ExecPlot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd, nil)
 	if err != nil {
 		return handlePlotError(w, out, err)
 	}
@@ -263,7 +264,15 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 	}
 	defer os.RemoveAll(tmpDir)
 
-	_, imgFile, err := models.ExecPlot(tmpDir, pd)
+	opt := models.NewPlotOpt()
+	if w, err := strconv.ParseFloat(r.URL.Query().Get("w"), 32); err == nil && w > 0 {
+		opt.Wscale = w
+	}
+	if h, err := strconv.ParseFloat(r.URL.Query().Get("h"), 32); err == nil && h > 0 {
+		opt.Hscale = h
+	}
+
+	_, imgFile, err := models.ExecPlot(tmpDir, pd, opt)
 	if err != nil {
 		// unlike POST /plot API, code excecution failure causes 500 error here instead of 422
 		// because the fact that the code is stored already means it was once able to be run
@@ -307,7 +316,7 @@ func replotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	out, imgFile, err := models.ExecPlot(tmpDir, pd)
+	out, imgFile, err := models.ExecPlot(tmpDir, pd, nil)
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
 			http.Error(w, ApiErrorJSON("Program failed to excecute", out), 422) // Unprocessable Entity

@@ -10,12 +10,15 @@ import (
 // Responsible for running R and get output as ggplot2 plot
 type Gg struct {
 	Dir     string
-	Type    string
+	Format  string
 	Timeout int
+	DPI     int
+	Width   float64
+	Height  float64
 }
 
 func (gg *Gg) ImgName() string {
-	return "img." + gg.Type
+	return "img." + gg.Format
 }
 
 func (gg *Gg) AddFile(name string, content string) (err error) {
@@ -33,7 +36,12 @@ func (gg *Gg) AddCode(code string) (err error) {
 		"\n" +
 		code +
 		"\n" +
-		`ggsave(file="` + gg.ImgName() + `", dpi=72, width=8, height=8)`
+		`ggsave(` +
+		`file="` + gg.ImgName() + `", ` +
+		`dpi=` + strconv.Itoa(gg.DPI) + `, ` +
+		`width=` + strconv.FormatFloat(gg.Width, 'f', 2, 32) + `, ` +
+		`height=` + strconv.FormatFloat(gg.Height, 'f', 2, 32) +
+		`)`
 
 	return gg.AddFile("program.R", prog)
 }

@@ -97,8 +97,28 @@ func SelectPlotAndFiles(id string) (pd *PlotData, err error) {
 	return
 }
 
-func ExecPlot(dir string, pd *PlotData) (out string, imgFile string, err error) {
-	gg := ggplot2.Gg{Dir: dir, Type: "svg", Timeout: 10}
+type PlotOpt struct {
+	Format string
+	Wscale float64
+	Hscale float64
+}
+
+func NewPlotOpt() *PlotOpt {
+	return &PlotOpt{Format: "svg", Wscale: 1, Hscale: 1}
+}
+
+func ExecPlot(dir string, pd *PlotData, opt *PlotOpt) (out string, imgFile string, err error) {
+	if opt == nil {
+		opt = NewPlotOpt()
+	}
+	gg := ggplot2.Gg{
+		Dir:     dir,
+		Format:  opt.Format,     // svg
+		Timeout: 10,             // seconds
+		DPI:     96,             // default dpi 96 (not configurable with svg)
+		Width:   8 * opt.Wscale, // default width 6*96px
+		Height:  8 * opt.Hscale, // default height 6*96px
+	}
 
 	for name, content := range pd.Files {
 		err = gg.AddFile(name, content)
