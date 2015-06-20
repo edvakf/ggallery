@@ -113,7 +113,7 @@ func ExecPlot(dir string, pd *PlotData, opt *PlotOpt) (out string, imgFile strin
 	}
 	gg := ggplot2.Gg{
 		Dir:     dir,
-		Format:  opt.Format,     // svg
+		Format:  opt.Format,     // svg or png
 		Timeout: 10,             // seconds
 		DPI:     96,             // default dpi 96 (not configurable with svg)
 		Width:   8 * opt.Wscale, // default width 6*96px

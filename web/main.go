@@ -49,7 +49,7 @@ func main() {
 	goji.Post("/run", APIHandler(runHandler))
 	goji.Post(regexp.MustCompile(`^/replot/(?P<id>[0-9a-zA-Z]+)$`), APIHandler(replotHandler))
 	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)$`), APIHandler(getPlotHandler))
-	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+).svg$`), APIHandler(getPlotImageHandler))
+	goji.Get(regexp.MustCompile(`^/plot/(?P<id>[0-9a-zA-Z]+)\.(?P<format>svg|png)$`), APIHandler(getPlotImageHandler))
 	goji.Get(regexp.MustCompile(`^/edit/[0-9a-zA-Z]+$`), func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
 	goji.Get("/edit", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/edit.html") })
 	goji.Get("/help", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, viewsDir+"/help.html") })
@@ -248,6 +248,7 @@ func getPlotHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 
 func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error {
 	id := c.URLParams["id"]
+	format := c.URLParams["format"]
 
 	pd, err := models.SelectPlotAndFiles(id)
 	if err == sql.ErrNoRows {
@@ -265,6 +266,7 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 	defer os.RemoveAll(tmpDir)
 
 	opt := models.NewPlotOpt()
+	opt.Format = format
 	if w, err := strconv.ParseFloat(r.URL.Query().Get("w"), 32); err == nil && w > 0 {
 		opt.Wscale = w
 	}
@@ -279,7 +281,11 @@ func getPlotImageHandler(c web.C, w http.ResponseWriter, r *http.Request) error 
 		return err
 	}
 
-	w.Header().Set("Content-Type", "image/svg+xml")
+	if format == "svg" {
+		w.Header().Set("Content-Type", "image/svg+xml")
+	} else if format == "png" {
+		w.Header().Set("Content-Type", "image/png")
+	}
 	http.ServeFile(w, r, imgFile)
 	return nil
 }
