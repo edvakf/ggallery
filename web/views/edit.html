@@ -81,18 +81,24 @@
                     <li role="presentation" class="active"><a data-toggle="pill" href="#image-url-pane">Image URL</a></li>
                     <li role="presentation"><a data-toggle="pill" href="#edit-url-pane">Edit URL</a></li>
                     <li role="presentation"><a data-toggle="pill" href="#html-image-pane">HTML Image</a></li>
+                    <li role="presentation"><a data-toggle="pill" href="#social-pane">Social Buttons</a></li>
                     <li role="presentation"><a data-toggle="pill" href="#replot-api-pane" v-if="replotApi">Replot API</a></li>
                   </ul>
 
                   <div class="tab-content">
                     <div id="image-url-pane" class="tab-pane active">
                       <input type="text" class="form-control" v-attr="value: imageUrl">
+                      <a href="/help#img">See image options</a>
                     </div>
                     <div id="edit-url-pane" class="tab-pane">
                       <input type="text" class="form-control" v-attr="value: editUrl">
                     </div>
                     <div id="html-image-pane" class="tab-pane">
                       <input type="text" class="form-control" v-attr="value: htmlImage">
+                    </div>
+                    <div id="social-pane" class="tab-pane">
+                      <button class="btn btn-default" v-on="click: twitter"><img src="/static/share/twitter.png" width="20" height="20"> Tweet</button>
+                      <button class="btn btn-default" v-on="click: facebook"><img src="/static/share/facebook.png" width="20" height="20"> Share</button>
                     </div>
                     <div id="replot-api-pane" class="tab-pane" v-if="replotApi">
                       <input type="text" class="form-control" v-attr="value: replotApi">
@@ -134,3 +140,4 @@
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/0.11.10/vue.js"></script>
 <script src="/static/edit.js"></script>
+<script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>

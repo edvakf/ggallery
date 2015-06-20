@@ -3,6 +3,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>ggplot gallery</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <style>
+    :target {
+      background-color: PaleGoldenrod;
+    }
+  </style>
 </head>
 
 <nav class="navbar navbar-inverse">
@@ -30,6 +35,13 @@
   <pre>df &lt;- read.table("file1");</pre>
   <p>There is no need to write <code>library(ggplot2)</code> and <code>ggsave</code> explicitly, as they are added automatically at execution time.</p>
 
+  <div id="img">
+    <h3>Image URL</h3>
+    <p>Once you save your plot, you can access the image by the URL <code>/plot/:id.svg</code> in the SVG format.</p>
+    <p>You can also get a PNG image by changing .svg to .png.</p>
+    <p>To scale the image, add w and h URL parameters, e.g., '?w=2&amp;h=2' makes the image twice as big.</p>
+  </div>
+
   <h3>Replot</h3>
   <p>Once you have a working code, it can be used as a template for generating another plot by attaching different set of files. The major purpose of it is to produce daily KPI plots etc. and paste them onto bussiness chats.</p>
 
@@ -53,9 +65,6 @@ ok response: {output:string, svg:string, id:string, svg_url:string}
 error response: {error:string, output:string}</pre>
 
   The ID returned here can be used to get an image URL.
-
-  <h4><code>GET /plot/:id.svg</code></h4>
-  Execute the saved code and show svg image.
 
   <h4><code>GET /plot/:id</code></h4>
   Return the saved code and files. This does not execute the code.

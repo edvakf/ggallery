@@ -144,7 +144,15 @@ var app = new Vue({
           break;
         }
       }
-    }
+    },
+    twitter: function() {
+      var href = 'https://twitter.com/intent/tweet?status=' + encodeURIComponent("#ggplotgallery " + location.href);
+      window.open(href, 'TWwindow', 'width=650, height=450, menubar=no, toolbar=no, scrollbars=yes');
+    },
+    facebook: function() {
+      var href = 'https://www.facebook.com/share.php?u=' + encodeURIComponent(location.href);
+      window.open(href, 'FBwindow', 'width=650, height=450, menubar=no, toolbar=no, scrollbars=yes');
+    },
   }
 });
 

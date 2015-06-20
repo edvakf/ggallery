@@ -22,3 +22,7 @@ textarea.editor {
   padding-left: 10px;
   padding-right: 10px;
 }
+
+#social-pane {
+  text-align: center;
+}
