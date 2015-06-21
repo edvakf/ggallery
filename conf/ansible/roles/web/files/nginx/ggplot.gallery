@@ -1,0 +1,30 @@
+upstream ggallery {
+    server 127.0.0.1:8000;
+}
+
+proxy_cache_path      /dev/shm/nginx/ggallery levels=1:2 keys_zone=ggallery:16m inactive=7d max_size=2g;
+
+server {
+    listen 80;
+    server_name ggplot.gallery;
+
+    gzip on;
+    gzip_types      text/javascript text/css application/json image/svg+xml;
+    gzip_min_length 1000;
+
+    include /etc/nginx/proxy_params;
+
+    proxy_temp_path       /dev/shm/nginx/temp;
+
+    location / {
+        proxy_pass http://ggallery;
+    }
+
+    location ~ ^.+\.(?:svg|png)$ {
+        proxy_cache           ggallery;
+        proxy_cache_valid     200 7d;
+        proxy_cache_valid     any 1m;
+
+        proxy_pass http://ggallery;
+    }
+}

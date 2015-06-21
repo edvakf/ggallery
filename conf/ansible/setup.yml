@@ -1,0 +1,5 @@
+---
+- hosts: webserver
+  sudo: yes
+  roles:
+    - web

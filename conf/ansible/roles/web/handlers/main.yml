@@ -1,0 +1,3 @@
+---
+- include: monit.yml
+- include: nginx.yml

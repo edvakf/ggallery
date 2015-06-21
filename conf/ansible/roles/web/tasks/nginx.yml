@@ -1,0 +1,25 @@
+---
+- name: make /dev/shm/nginx directory
+  file: path=/dev/shm/nginx state=directory mode=0755
+
+- name: set nginx apt repository
+  apt_repository: repo="deb http://ftp.de.debian.org/debian/ wheezy-backports main contrib non-free" state=present
+
+- name: install nginx
+  apt: name=nginx state=latest default_release=wheezy-backports update_cache=yes
+
+- name: start nginx
+  service: name=nginx state=running enabled=yes
+  notify: restart nginx
+
+- name: delete default virtualhost setting
+  file: path=/etc/nginx/sites-enabled/default state=absent
+  notify: reload nginx
+
+- name: copy nginx config for ggallery
+  copy: src=nginx/ggplot.gallery dest=/etc/nginx/sites-available/ggplot.gallery owner=root group=root mode="u=rw,g=r,o=r"
+  notify: reload nginx
+
+- name: enable ggallery virtualhost
+  file: src=/etc/nginx/sites-available/ggplot.gallery dest=/etc/nginx/sites-enabled/ggplot.gallery state=link
+  notify: reload nginx

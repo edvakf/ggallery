@@ -1,0 +1,14 @@
+---
+- name: be sure monit is installed
+  apt: name=monit state=installed
+
+- name: be sure monit is running and enabled
+  service: name=monit state=running enabled=yes
+
+- name: copy monit config for http support
+  copy: src=monit/http.conf dest=/etc/monit/conf.d/http.conf owner=root group=root mode="u=rw,g=r,o=r"
+  notify: reload monit
+
+- name: copy monit config for ggallery
+  copy: src=monit/ggallery.conf dest=/etc/monit/conf.d/ggallery.conf owner=root group=root mode="u=rw,g=r,o=r"
+  notify: reload monit

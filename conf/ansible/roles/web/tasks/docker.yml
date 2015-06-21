@@ -1,0 +1,9 @@
+---
+- name: be sure docker is installed
+  shell: curl -sSL https://get.docker.com/ | sudo sh creates=/usr/bin/docker
+
+- name: be sure docker is running and enabled
+  service: name=docker state=running enabled=yes
+
+- name: docker pull R image
+  command: docker pull quay.io/edvakf/r-ggplot2

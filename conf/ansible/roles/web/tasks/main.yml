@@ -1,0 +1,7 @@
+---
+- include: monit.yml
+- include: nginx.yml
+- include: docker.yml
+- include: golang.yml
+- include: user.yml
+- include: git.yml

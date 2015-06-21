@@ -1,0 +1,6 @@
+---
+env:
+  GOPATH: /opt/go
+golang_version: 1.4.2
+golang_os: linux
+golang_arch: amd64

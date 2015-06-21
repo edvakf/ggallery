@@ -1,0 +1,3 @@
+---
+- name: create gg user
+  user: name=gg group=docker createhome=yes shell=/sbin/nologin

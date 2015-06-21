@@ -1,0 +1,25 @@
+---
+- hosts: webserver
+  sudo: yes
+  vars:
+    gopath_env:
+      GOPATH: /opt/go
+
+  tasks:
+    - name: clone
+      git: repo=https://github.com/edvakf/ggallery.git dest=/opt/go/src/github.com/edvakf/ggallery/ version=master
+
+    - name: go get
+      shell: go get -u -f ./...
+      args:
+        chdir: /opt/go/src/github.com/edvakf/ggallery/
+      environment: gopath_env
+
+    - name: go build
+      shell: go build -a ./...
+      args:
+        chdir: /opt/go/src/github.com/edvakf/ggallery/web/
+      environment: gopath_env
+
+    - name: restart via monit
+      shell: monit restart ggallery
