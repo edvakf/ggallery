@@ -24,6 +24,7 @@ server {
         proxy_cache           ggallery;
         proxy_cache_valid     200 7d;
         proxy_cache_valid     any 1m;
+        proxy_cache_lock      on;
 
         proxy_pass http://ggallery;
     }
