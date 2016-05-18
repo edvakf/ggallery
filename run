@@ -1,7 +1,8 @@
 #!/bin/bash -eu
 
 ROOT=$(cd $(dirname $0); pwd)
-MYSQL_HOST_PORT=$(curl -s http://metadata/computeMetadata/v1/instance/attributes/MYSQL_HOST_PORT -H "Metadata-Flavor: Google")
+#MYSQL_HOST_PORT=$(curl -s http://metadata/computeMetadata/v1/instance/attributes/MYSQL_HOST_PORT -H "Metadata-Flavor: Google")
+MYSQL_HOST_PORT=127.0.0.1:3306
 BIND=":8000"
 
 exec $ROOT/web/web -tmpdir=/tmp -static=$ROOT/web/static -views=$ROOT/web/views -db=$MYSQL_HOST_PORT -bind=$BIND
